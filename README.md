@@ -38,14 +38,14 @@ python main.py samples/sample_novel.txt -o output/screenplay.yaml --print
 python main.py samples/sample_novel.txt --stats
 ```
 
-### AI 模式（需要 DeepSeek API Key）
+### AI 模式（需要 OpenAI API Key）
 
 ```bash
 # 使用 API Key
-python main.py samples/sample_novel.txt --mode ai --api-key sk-your-deepseek-key
+python main.py samples/sample_novel.txt --mode ai --api-key sk-xxx
 
 # 或设置环境变量
-set DEEPSEEK_API_KEY=sk-your-deepseek-key
+set OPENAI_API_KEY=sk-xxx
 python main.py samples/sample_novel.txt --mode ai
 ```
 
@@ -165,13 +165,13 @@ screenplay.save("output/my_screenplay.yaml")
 
 ### 自定义 AI 端点
 
-默认使用 DeepSeek API，也支持任何 OpenAI 兼容 API：
+支持任何 OpenAI 兼容 API：
 
 ```bash
 python main.py novel.txt --mode ai \
-  --api-base https://api.deepseek.com/v1 \
+  --api-base https://your-api.com/v1 \
   --api-key your-key \
-  --model deepseek-chat
+  --model your-model
 ```
 
 ---

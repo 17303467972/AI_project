@@ -60,17 +60,17 @@ def main():
     )
     parser.add_argument(
         "--api-key",
-        help="AI 模式的 API Key (也可通过 DEEPSEEK_API_KEY 环境变量设置)",
+        help="AI 模式的 API Key (也可通过 OPENAI_API_KEY 环境变量设置)",
     )
     parser.add_argument(
         "--api-base",
-        default="https://api.deepseek.com/v1",
-        help="API Base URL (默认: https://api.deepseek.com/v1)",
+        default="https://api.openai.com/v1",
+        help="API Base URL (默认: https://api.openai.com/v1)",
     )
     parser.add_argument(
         "--model",
-        default="deepseek-chat",
-        help="AI 模型 (默认: deepseek-chat)",
+        default="gpt-4o",
+        help="AI 模型 (默认: gpt-4o)",
     )
     parser.add_argument(
         "--stats",
@@ -144,7 +144,7 @@ def cmd_convert(args) -> int:
     print("🔄 正在转换为剧本...")
     converter_kwargs = {}
     if args.mode == "ai":
-        api_key = args.api_key or os.environ.get("DEEPSEEK_API_KEY")
+        api_key = args.api_key or os.environ.get("OPENAI_API_KEY")
         if not api_key:
             print("⚠️  未提供 API Key，将回退到规则模式")
             args.mode = "rule"
