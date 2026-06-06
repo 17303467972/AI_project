@@ -751,81 +751,34 @@ class AIConverter(BaseConverter):
 章节内容：
 {chapter.raw_text[:2000]}
 
-请返回如下 JSON 对象：
-{{
-  "scenes": [
-    {{
-      "scene_number": 1,
-      "location": "场景地点",
-      "location_type": "INT|EXT|INT/EXT",
-      "time": "时间",
-      "setting_description": "环境描述",
-      "characters_present": ["CHAR_001"],
-      "beats": [
-        {{
-          "beat_number": 1,
-          "type": "action|dialogue|monologue|voiceover|transition|description|sound",
-          "character": "CHAR_001 (仅对话/独白类型需要)",
-          "content": "内容",
-          "parenthetical": "(可选的动作提示)",
-          "emotion": "情感标注"
-        }}
-      ]
-    }}
-  ]
-}}
+请返回如下 JSON 数组（场景列表）：
+[
+  {{
+    "scene_number": 1,
+    "location": "场景地点",
+    "location_type": "INT|EXT|INT/EXT",
+    "time": "时间",
+    "setting_description": "环境描述",
+    "characters_present": ["CHAR_001"],
+    "beats": [
+      {{
+        "beat_number": 1,
+        "type": "action|dialogue|monologue|voiceover|transition|description|sound",
+        "character": "CHAR_001 (仅对话/独白类型需要)",
+        "content": "内容",
+        "parenthetical": "(可选的动作提示)",
+        "emotion": "情感标注"
+      }}
+    ]
+  }}
+]
 
 注意：
 1. 对话类型 (dialogue) 的 beat 必须指定 character
-2. 只返回 JSON 对象，不要有任何其他文字
+2. 只返回 JSON 数组，不要有任何其他文字
 3. 每个场景的 beats 至少 2 个"""
 
-        raw_result = self._call_ai_api(prompt, expect_json=True)
-
-        # 将 AI 返回的 dict 转换为 Scene 对象
-        raw_scenes = raw_result.get("scenes", []) if isinstance(raw_result, dict) else []
-        scenes: List[Scene] = []
-        if isinstance(raw_scenes, list):
-            for s_data in raw_scenes:
-                # 转换 beats
-                beats = []
-                for b_data in s_data.get("beats", []):
-                    beat_type_str = b_data.get("type", "description")
-                    try:
-                        beat_type = BeatType(beat_type_str)
-                    except ValueError:
-                        beat_type = BeatType.DESCRIPTION
-                    beat = Beat(
-                        beat_number=b_data.get("beat_number", len(beats) + 1),
-                        type=beat_type,
-                        character=b_data.get("character"),
-                        content=b_data.get("content", ""),
-                        parenthetical=b_data.get("parenthetical"),
-                        emotion=b_data.get("emotion"),
-                        source_chapter=chapter.number,
-                    )
-                    beats.append(beat)
-
-                # 转换 location_type
-                loc_type_str = s_data.get("location_type", "INT")
-                try:
-                    loc_type = LocationType(loc_type_str)
-                except ValueError:
-                    loc_type = LocationType.INTERIOR
-
-                scene = Scene(
-                    scene_number=s_data.get("scene_number", len(scenes) + 1),
-                    location=s_data.get("location", ""),
-                    location_type=loc_type,
-                    time=s_data.get("time", "day"),
-                    setting_description=s_data.get("setting_description", ""),
-                    characters_present=s_data.get("characters_present", []),
-                    beats=beats,
-                    source_chapter=chapter.number,
-                )
-                scenes.append(scene)
-
-        return scenes
+        return self._call_ai_api(prompt, expect_json=True)
 
     def _organize_scenes_into_acts(
         self, scenes: List[Scene], chapter_count: int
