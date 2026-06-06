@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Output files (generated)
+output/
+
+# Environment
+.env
+
+# OS
+Thumbs.db
+.DS_Store
