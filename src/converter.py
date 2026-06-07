@@ -872,57 +872,64 @@ class AIConverter(BaseConverter):
 
     def _call_ai_api(self, prompt: str, expect_json: bool = False) -> Any:
         """
-        调用 OpenAI 兼容 API
-
-        这是一个占位实现。实际使用需要安装 openai 包并配置 API Key。
+        调用 OpenAI 兼容 API（使用 urllib，兼容性最好）
         """
-        try:
-            import openai
-            client = openai.OpenAI(
-                api_key=self.api_key,
-                base_url=self.api_base,
-            )
+        messages = [
+            {"role": "system", "content": "你是一个专业的剧本改编 AI 助手。请始终返回有效的 JSON。"},
+            {"role": "user", "content": prompt},
+        ]
+        payload_dict = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+        }
+        if expect_json:
+            payload_dict["response_format"] = {"type": "json_object"}
+        payload = json.dumps(payload_dict)
 
-            response = client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "你是一个专业的剧本改编 AI 助手。请始终返回有效的 JSON。"},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=self.temperature,
-                response_format={"type": "json_object"} if expect_json else None,
-            )
+        last_error = None
+        max_retries = 2
+        for attempt in range(max_retries + 1):
+            try:
+                import urllib.request
 
-            content = response.choices[0].message.content
-            if expect_json and content:
-                # 清理可能的 markdown 代码块标记
-                content = re.sub(r'^```(?:json)?\s*', '', content.strip())
-                content = re.sub(r'\s*```$', '', content.strip())
-                return json.loads(content)
-            return content
+                url = f"{self.api_base.rstrip('/')}/chat/completions"
+                data = payload.encode("utf-8")
+                req = urllib.request.Request(url, data=data, headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                })
+                with urllib.request.urlopen(req, timeout=180) as resp:
+                    content = resp.read().decode("utf-8")
+                    result = json.loads(content)
+                    content = result["choices"][0]["message"]["content"]
+                    if expect_json and content:
+                        content = re.sub(r'^```(?:json)?\s*', '', content.strip())
+                        content = re.sub(r'\s*```$', '', content.strip())
+                        return json.loads(content)
+                    return content
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries:
+                    continue
 
-        except ImportError:
+        # 所有重试都失败，给出友好提示
+        err_msg = str(last_error)
+        if "Connection" in err_msg or "connect" in err_msg.lower() or "timed out" in err_msg.lower():
             raise RuntimeError(
-                "使用 AI 模式需要安装 openai 包：pip install openai"
+                f"无法连接到 AI API ({self.api_base})。"
+                "请检查网络连接、代理设置，或确认 API Base URL 正确。"
             )
-        except Exception as e:
-            err_msg = str(e)
-            # 提供更友好的错误提示
-            if "Connection" in err_msg or "connect" in err_msg.lower():
-                raise RuntimeError(
-                    f"无法连接到 AI API ({self.api_base})。"
-                    "请检查网络连接、代理设置，或确认 API Base URL 正确。"
-                )
-            elif "auth" in err_msg.lower() or "401" in err_msg or "403" in err_msg:
-                raise RuntimeError(
-                    "API Key 无效或已过期。请检查密钥是否正确。"
-                )
-            elif "model" in err_msg.lower():
-                raise RuntimeError(
-                    f"模型 '{self.model}' 不可用。请检查模型名称是否正确。"
-                )
-            else:
-                raise RuntimeError(f"AI API 调用失败: {e}")
+        elif "auth" in err_msg.lower() or "401" in err_msg or "403" in err_msg:
+            raise RuntimeError(
+                "API Key 无效或已过期。请检查密钥是否正确。"
+            )
+        elif "model" in err_msg.lower():
+            raise RuntimeError(
+                f"模型 '{self.model}' 不可用。请检查模型名称是否正确。"
+            )
+        else:
+            raise RuntimeError(f"AI API 调用失败: {last_error}")
 
 
 # ============================================================
