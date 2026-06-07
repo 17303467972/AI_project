@@ -17,6 +17,12 @@
 
 ---
 
+## 🎥 Demo 演示
+
+> 📺 **完整功能演示视频**：点击下方链接在线观看
+
+【AI小说转剧本】 https://www.bilibili.com/video/BV1f5E46pE3z/?share_source=copy_web&vd_source=dd9dc3a66bbca54d8ffb6ea91bd7cf16
+
 ## 快速开始
 
 ### 安装
@@ -54,6 +60,19 @@ python main.py samples/sample_novel.txt --mode ai
 ```bash
 python main.py --validate output/screenplay.yaml
 ```
+
+### Web 编辑器（可视化增删改查）
+
+```bash
+# 安装依赖
+pip install flask
+
+# 启动 Web 编辑器
+python app.py
+# 浏览器打开 http://127.0.0.1:5000
+```
+
+支持：上传转换 → 场景导航 → 节拍增删改 → 角色管理 → 元数据编辑 → 校验下载
 
 ---
 
@@ -109,6 +128,7 @@ screenplay:
 ```
 NovelToScreenplay/
 ├── main.py                  # 主入口（命令行界面）
+├── app.py                   # Web 编辑器（Flask 服务端）
 ├── SCHEMA.md                # YAML Schema 设计文档（含设计原因）
 ├── requirements.txt         # Python 依赖
 ├── README.md                # 本文件
@@ -117,6 +137,8 @@ NovelToScreenplay/
 │   ├── schema.py            # 剧本 Schema 定义、校验、序列化
 │   ├── parser.py            # 小说文本解析（章节切分、对话提取）
 │   └── converter.py         # 转换引擎（规则模式 + AI 模式）
+├── templates/
+│   └── index.html           # Web 编辑器前端界面
 ├── samples/
 │   └── sample_novel.txt     # 示例小说（3章武侠）
 └── output/                  # 输出目录
@@ -175,7 +197,3 @@ python main.py novel.txt --mode ai \
 ```
 
 ---
-
-## 许可
-
-MIT License

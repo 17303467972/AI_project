@@ -1,0 +1,1909 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🎬 剧本编辑器 — AI 小说转剧本</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #1a1a2e;
+        --card-bg: #16213e;
+        --accent: #e94560;
+        --text: #e0e0e0;
+        --text-muted: #a0a0b0;
+        --border: #2a2a4a;
+        --input-bg: #0f0f23;
+        --gold: #f0c040;
+        --tag-bg: #1e3a5f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        min-height: 100vh;
+      }
+      /* ── Top Bar ── */
+      .topbar {
+        background: var(--card-bg);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .topbar .logo {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--accent);
+        white-space: nowrap;
+      }
+      .topbar .badge-status {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 12px;
+      }
+      .topbar .btn {
+        font-size: 0.85rem;
+        border-radius: 8px;
+        padding: 6px 16px;
+      }
+      .btn-accent {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+      }
+      .btn-accent:hover {
+        background: #c73650;
+        color: #fff;
+      }
+      .btn-outline-light2 {
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn-outline-light2:hover {
+        background: var(--border);
+        color: #fff;
+      }
+
+      /* ── Main Layout ── */
+      .main-container {
+        display: flex;
+        height: calc(100vh - 64px);
+      }
+
+      /* ── Sidebar ── */
+      .sidebar {
+        width: 280px;
+        min-width: 280px;
+        background: var(--card-bg);
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .sidebar .upload-zone {
+        padding: 20px 16px;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar .upload-zone label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .sidebar .upload-area {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 20px 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+      .sidebar .upload-area:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .sidebar .upload-area i {
+        font-size: 2rem;
+        display: block;
+        margin-bottom: 6px;
+      }
+      .sidebar .file-loaded {
+        color: #4caf50;
+        font-size: 0.8rem;
+        margin-top: 6px;
+      }
+      .sidebar .form-select,
+      .sidebar .form-control {
+        background: var(--input-bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        font-size: 0.85rem;
+        border-radius: 8px;
+        margin-top: 8px;
+      }
+      .sidebar .form-select:focus,
+      .sidebar .form-control:focus {
+        border-color: var(--accent);
+        box-shadow: none;
+      }
+
+      /* ── Scene Navigator ── */
+      .scene-nav {
+        flex: 1;
+        overflow-y: auto;
+        padding: 12px 8px;
+      }
+      .scene-nav .act-group {
+        margin-bottom: 8px;
+      }
+      .scene-nav .act-title {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: var(--text-muted);
+        padding: 8px 12px 4px;
+        cursor: pointer;
+        user-select: none;
+      }
+      .scene-nav .act-title i {
+        font-size: 0.7rem;
+        margin-right: 4px;
+        transition: transform 0.2s;
+      }
+      .scene-nav .act-title.collapsed i {
+        transform: rotate(-90deg);
+      }
+      .scene-nav .scene-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px 8px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.82rem;
+        transition: all 0.15s;
+        color: var(--text-muted);
+      }
+      .scene-nav .scene-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+      }
+      .scene-nav .scene-item.active {
+        background: rgba(233, 69, 96, 0.15);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .scene-nav .scene-item .loc-type {
+        font-size: 0.65rem;
+        background: var(--tag-bg);
+        padding: 1px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      .sidebar-footer {
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      /* ── Content Area ── */
+      .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px 32px;
+      }
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        text-align: center;
+      }
+      .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      .empty-state h3 {
+        font-weight: 300;
+        margin-bottom: 8px;
+      }
+
+      /* ── Scene Editor Card ── */
+      .scene-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+      }
+      .scene-card .scene-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .scene-card .scene-number {
+        font-size: 0.75rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .scene-card .scene-location {
+        font-size: 1.1rem;
+        font-weight: 600;
+      }
+      .scene-card .scene-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .scene-card .scene-meta span {
+        font-size: 0.75rem;
+        background: var(--tag-bg);
+        padding: 2px 10px;
+        border-radius: 10px;
+        color: var(--text-muted);
+      }
+      .scene-card .scene-desc {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-bottom: 16px;
+        font-style: italic;
+        padding: 8px 12px;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 8px;
+        border-left: 3px solid var(--border);
+      }
+      .scene-card .section-label {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+      }
+
+      /* ── Beat Items ── */
+      .beat-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .beat-item {
+        display: flex;
+        gap: 12px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        margin-bottom: 4px;
+        transition: background 0.15s;
+        align-items: flex-start;
+      }
+      .beat-item:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .beat-item .beat-num {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        min-width: 24px;
+        text-align: right;
+        padding-top: 3px;
+      }
+      .beat-item .beat-type-tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        min-width: 70px;
+        text-align: center;
+      }
+      .beat-type-dialogue {
+        background: #2d4a3e;
+        color: #6fcf97;
+      }
+      .beat-type-action {
+        background: #3d2e1e;
+        color: #f2994a;
+      }
+      .beat-type-description {
+        background: #2a3a5c;
+        color: #6f9fcf;
+      }
+      .beat-type-monologue {
+        background: #3d1e3a;
+        color: #cf6fcf;
+      }
+      .beat-type-voiceover {
+        background: #1e3d3d;
+        color: #6fcfcf;
+      }
+      .beat-type-transition {
+        background: #3d3d1e;
+        color: #cfcf6f;
+      }
+      .beat-type-sound {
+        background: #2d2d3d;
+        color: #9f9fcf;
+      }
+      .beat-item .beat-char {
+        font-size: 0.75rem;
+        color: var(--gold);
+        font-weight: 600;
+        min-width: 60px;
+        padding-top: 2px;
+        white-space: nowrap;
+      }
+      .beat-item .beat-content {
+        flex: 1;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        padding-top: 2px;
+      }
+      .beat-item .beat-emotion {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-style: italic;
+        min-width: 50px;
+        padding-top: 2px;
+      }
+      .beat-item .beat-actions {
+        display: none;
+        gap: 4px;
+      }
+      .beat-item:hover .beat-actions {
+        display: flex;
+      }
+      .beat-item .btn-icon {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 0.8rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .beat-item .btn-icon:hover {
+        color: var(--accent);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      /* ── Editable Fields ── */
+      .editable {
+        cursor: pointer;
+        border-bottom: 1px dashed transparent;
+        transition: all 0.15s;
+        padding: 2px 4px;
+        border-radius: 4px;
+        min-width: 20px;
+        display: inline-block;
+      }
+      .editable:hover {
+        border-bottom-color: var(--accent);
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .editable:focus {
+        outline: none;
+        border-bottom-color: var(--accent);
+        background: var(--input-bg);
+        cursor: text;
+      }
+
+      /* ── Buttons Row ── */
+      .btn-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+      .btn-sm-round {
+        font-size: 0.78rem;
+        border-radius: 20px;
+        padding: 4px 14px;
+      }
+
+      /* ── Character Card ── */
+      .char-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 12px;
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .char-card .char-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .char-role-protagonist {
+        background: #3d2e1e;
+        color: #f2994a;
+      }
+      .char-role-antagonist {
+        background: #3d1e1e;
+        color: #eb5757;
+      }
+      .char-role-supporting {
+        background: #2a3a5c;
+        color: #6f9fcf;
+      }
+      .char-role-minor {
+        background: #2d2d3d;
+        color: #9f9fcf;
+      }
+      .char-card .char-info {
+        flex: 1;
+      }
+      .char-card .char-name {
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      .char-card .char-role-tag {
+        font-size: 0.7rem;
+        padding: 1px 8px;
+        border-radius: 8px;
+        margin-left: 8px;
+      }
+      .char-card .char-desc {
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+      }
+      .char-card .char-traits {
+        margin-top: 6px;
+      }
+      .char-card .char-trait {
+        font-size: 0.7rem;
+        background: var(--tag-bg);
+        padding: 2px 10px;
+        border-radius: 10px;
+        margin-right: 4px;
+        display: inline-block;
+        margin-bottom: 4px;
+      }
+
+      /* ── Metadata Tab ── */
+      .meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .meta-field label {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: block;
+        margin-bottom: 4px;
+      }
+      .meta-field input,
+      .meta-field textarea {
+        width: 100%;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        resize: vertical;
+      }
+      .meta-field input:focus,
+      .meta-field textarea:focus {
+        border-color: var(--accent);
+        outline: none;
+      }
+
+      /* ── YAML Preview ── */
+      .yaml-preview {
+        background: #0d1117;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+        font-size: 0.8rem;
+        white-space: pre-wrap;
+        color: #c9d1d9;
+        max-height: 70vh;
+        overflow-y: auto;
+        line-height: 1.6;
+      }
+
+      /* ── Toast / Alert ── */
+      .toast-container {
+        position: fixed;
+        top: 80px;
+        right: 24px;
+        z-index: 9999;
+      }
+      .custom-toast {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 12px 20px;
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        animation: slideIn 0.25s ease;
+      }
+      .custom-toast.success {
+        border-left: 4px solid #4caf50;
+      }
+      .custom-toast.error {
+        border-left: 4px solid #eb5757;
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(40px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      /* ── Tabs ── */
+      .nav-tabs-custom {
+        display: flex;
+        gap: 4px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 20px;
+        padding-bottom: 0;
+      }
+      .nav-tabs-custom .tab-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        padding: 10px 20px;
+        font-size: 0.85rem;
+        border-radius: 8px 8px 0 0;
+        cursor: pointer;
+        transition: all 0.15s;
+        position: relative;
+      }
+      .nav-tabs-custom .tab-btn:hover {
+        color: var(--text);
+      }
+      .nav-tabs-custom .tab-btn.active {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .nav-tabs-custom .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 8px;
+        right: 8px;
+        height: 2px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+
+      /* ── Modal ── */
+      .modal-content-dark {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .modal-content-dark .modal-header {
+        border-bottom: 1px solid var(--border);
+      }
+      .modal-content-dark .modal-footer {
+        border-top: 1px solid var(--border);
+      }
+      .modal-content-dark .form-control,
+      .modal-content-dark .form-select {
+        background: var(--input-bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      /* ── Responsive ── */
+      @media (max-width: 900px) {
+        .sidebar {
+          width: 100%;
+          min-width: 100%;
+          max-height: 40vh;
+        }
+        .main-container {
+          flex-direction: column;
+        }
+        .meta-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ════════════ Top Bar ════════════ -->
+    <div class="topbar">
+      <span class="logo">🎬 剧本编辑器</span>
+      <span id="statusBadge" class="badge-status bg-secondary">等待上传</span>
+      <span class="flex-fill"></span>
+      <button
+        class="btn btn-outline-light2"
+        onclick="validateScreenplay()"
+        title="校验剧本"
+      >
+        <i class="bi bi-check-circle"></i> 校验
+      </button>
+      <button
+        class="btn btn-outline-light2"
+        onclick="downloadScreenplay()"
+        title="下载 YAML"
+      >
+        <i class="bi bi-download"></i> 下载
+      </button>
+      <button
+        class="btn btn-sm-round btn-accent"
+        onclick="saveScreenplay()"
+        title="保存编辑"
+      >
+        <i class="bi bi-cloud-upload"></i> 保存
+      </button>
+    </div>
+
+    <!-- ════════════ Toast Container ════════════ -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ════════════ Main Layout ════════════ -->
+    <div class="main-container">
+      <!-- ── Sidebar ── -->
+      <div class="sidebar">
+        <!-- Upload Zone -->
+        <div class="upload-zone">
+          <label>📥 上传小说</label>
+          <div
+            class="upload-area"
+            id="uploadArea"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            <i class="bi bi-cloud-arrow-up"></i>
+            点击选择 .txt 文件<br />或拖拽到此处
+          </div>
+          <input
+            type="file"
+            id="fileInput"
+            accept=".txt"
+            style="display: none"
+            onchange="onFileSelected(event)"
+          />
+          <div class="file-loaded" id="fileLoaded"></div>
+
+          <select class="form-select" id="convertMode" style="margin-top: 10px">
+            <option value="rule">⚡ 规则模式（快速）</option>
+            <option value="ai">🤖 AI 模式（DeepSeek）</option>
+          </select>
+
+          <div id="aiConfig" style="display: none; margin-top: 8px">
+            <input
+              type="password"
+              class="form-control"
+              id="apiKey"
+              placeholder="API Key（可选，默认用环境变量）"
+              style="margin-top: 4px"
+            />
+            <input
+              type="text"
+              class="form-control"
+              id="apiBase"
+              value="https://api.deepseek.com/v1"
+              placeholder="API Base URL"
+              style="margin-top: 4px"
+            />
+            <input
+              type="text"
+              class="form-control"
+              id="modelName"
+              value="deepseek-chat"
+              placeholder="模型名称"
+              style="margin-top: 4px"
+            />
+          </div>
+
+          <button
+            class="btn btn-accent w-100 mt-3"
+            id="convertBtn"
+            onclick="convertNovel()"
+            disabled
+          >
+            <i class="bi bi-arrow-repeat"></i> 开始转换
+          </button>
+        </div>
+
+        <!-- Scene Navigator -->
+        <div class="scene-nav" id="sceneNav">
+          <div
+            style="
+              padding: 16px;
+              color: var(--text-muted);
+              font-size: 0.8rem;
+              text-align: center;
+            "
+          >
+            上传小说开始编辑
+          </div>
+        </div>
+
+        <!-- Footer stats -->
+        <div class="sidebar-footer" id="sidebarStats"></div>
+      </div>
+
+      <!-- ── Content Area ── -->
+      <div class="content-area" id="contentArea">
+        <!-- Tab Navigation -->
+        <div class="nav-tabs-custom" id="tabNav" style="display: none">
+          <button class="tab-btn active" data-tab="scenes">🎬 场景编辑</button>
+          <button class="tab-btn" data-tab="characters">👥 角色管理</button>
+          <button class="tab-btn" data-tab="metadata">📋 元数据</button>
+          <button class="tab-btn" data-tab="yaml">📄 YAML 预览</button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState">
+          <i class="bi bi-journal-text"></i>
+          <h3>开始创作你的剧本</h3>
+          <p>
+            上传一部小说，使用 AI 或规则模式自动转换为剧本，然后在此打磨完善
+          </p>
+        </div>
+
+        <!-- Tab: Scenes -->
+        <div id="tab-scenes" style="display: none"></div>
+        <!-- Tab: Characters -->
+        <div id="tab-characters" style="display: none"></div>
+        <!-- Tab: Metadata -->
+        <div id="tab-metadata" style="display: none"></div>
+        <!-- Tab: YAML Preview -->
+        <div id="tab-yaml" style="display: none"></div>
+      </div>
+    </div>
+
+    <!-- ════════════ Modal: Add/Edit Beat ════════════ -->
+    <div class="modal fade" id="beatModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-content-dark">
+          <div class="modal-header">
+            <h5 class="modal-title" id="beatModalTitle">编辑节拍</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="beatEditMode" />
+            <!-- 'add' or 'edit' -->
+            <input type="hidden" id="beatEditSceneIdx" />
+            <input type="hidden" id="beatEditBeatIdx" />
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >类型</label
+                >
+                <select class="form-select" id="beatEditType">
+                  <option value="dialogue">💬 对白 dialogue</option>
+                  <option value="action">🎯 动作 action</option>
+                  <option value="description">📝 描述 description</option>
+                  <option value="monologue">🎭 独白 monologue</option>
+                  <option value="voiceover">🔊 画外音 voiceover</option>
+                  <option value="transition">🔄 转场 transition</option>
+                  <option value="sound">🔔 音效 sound</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >角色</label
+                >
+                <select class="form-select" id="beatEditCharacter">
+                  <option value="">— 无 —</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >情感</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="beatEditEmotion"
+                  placeholder="如：愤怒、喜悦、冷静..."
+                />
+              </div>
+              <div class="col-12">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >内容</label
+                >
+                <textarea
+                  class="form-control"
+                  id="beatEditContent"
+                  rows="3"
+                  placeholder="节拍内容..."
+                ></textarea>
+              </div>
+              <div class="col-12">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >括号指示（可选）</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="beatEditParenthetical"
+                  placeholder="如：(冷笑)、(低声)..."
+                />
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-light2"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button type="button" class="btn btn-accent" onclick="saveBeat()">
+              保存节拍
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ Modal: Add Scene ════════════ -->
+    <div class="modal fade" id="sceneModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content modal-content-dark">
+          <div class="modal-header">
+            <h5 class="modal-title">添加新场景</h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >地点</label
+                >
+                <input
+                  type="text"
+                  class="form-control"
+                  id="newSceneLocation"
+                  placeholder="场景地点"
+                />
+              </div>
+              <div class="col-md-3">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >内外景</label
+                >
+                <select class="form-select" id="newSceneLocType">
+                  <option value="INT">INT 内景</option>
+                  <option value="EXT">EXT 外景</option>
+                  <option value="INT/EXT">INT/EXT</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >时间</label
+                >
+                <select class="form-select" id="newSceneTime">
+                  <option value="day">白天</option>
+                  <option value="night">夜晚</option>
+                  <option value="dawn">黎明</option>
+                  <option value="morning">上午</option>
+                  <option value="noon">正午</option>
+                  <option value="afternoon">下午</option>
+                  <option value="dusk">黄昏</option>
+                  <option value="evening">傍晚</option>
+                  <option value="late_night">深夜</option>
+                </select>
+              </div>
+              <div class="col-12">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >环境描述</label
+                >
+                <textarea
+                  class="form-control"
+                  id="newSceneDesc"
+                  rows="2"
+                  placeholder="场景环境描述..."
+                ></textarea>
+              </div>
+              <div class="col-md-4">
+                <label
+                  class="form-label"
+                  style="font-size: 0.75rem; color: var(--text-muted)"
+                  >所属幕</label
+                >
+                <select class="form-select" id="newSceneAct"></select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-light2"
+              data-bs-dismiss="modal"
+            >
+              取消
+            </button>
+            <button type="button" class="btn btn-accent" onclick="addScene()">
+              添加场景
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ Scripts ════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // ============================================================
+      // Global State
+      // ============================================================
+      let screenplay = null
+      let currentTab = 'scenes'
+      let currentSceneIdx = null // currently selected scene (global index across all acts)
+
+      // ============================================================
+      // Helpers
+      // ============================================================
+
+      function toast(msg, type = 'success') {
+        const container = document.getElementById('toastContainer')
+        const div = document.createElement('div')
+        div.className = `custom-toast ${type}`
+        div.textContent = msg
+        container.appendChild(div)
+        setTimeout(() => {
+          div.style.opacity = '0'
+          div.style.transition = 'opacity 0.3s'
+        }, 2500)
+        setTimeout(() => div.remove(), 3000)
+      }
+
+      function getFlatScenes() {
+        if (!screenplay) return []
+        const flat = []
+        screenplay.acts.forEach((act, ai) => {
+          ;(act.scenes || []).forEach((scene, si) => {
+            flat.push({ actIdx: ai, sceneIdx: si, scene, act })
+          })
+        })
+        return flat
+      }
+
+      function findSceneGlobal(globalIdx) {
+        let count = 0
+        for (const act of screenplay.acts) {
+          for (let si = 0; si < (act.scenes || []).length; si++) {
+            if (count === globalIdx)
+              return {
+                act,
+                scene: act.scenes[si],
+                actIdx: screenplay.acts.indexOf(act),
+                sceneIdx: si,
+              }
+            count++
+          }
+        }
+        return null
+      }
+
+      function collectAllCharacters() {
+        const chars = []
+        if (screenplay && screenplay.characters) {
+          screenplay.characters.forEach((c) => chars.push(c))
+        }
+        return chars
+      }
+
+      // ============================================================
+      // File Handling
+      // ============================================================
+
+      document
+        .getElementById('uploadArea')
+        .addEventListener('dragover', (e) => {
+          e.preventDefault()
+        })
+      document.getElementById('uploadArea').addEventListener('drop', (e) => {
+        e.preventDefault()
+        const file = e.dataTransfer.files[0]
+        if (file) handleFile(file)
+      })
+      document.getElementById('fileInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) handleFile(e.target.files[0])
+      })
+
+      let selectedFile = null
+      function handleFile(file) {
+        if (!file.name.endsWith('.txt')) {
+          toast('请上传 .txt 格式的文本文件', 'error')
+          return
+        }
+        selectedFile = file
+        document.getElementById('fileLoaded').textContent =
+          `✅ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`
+        document.getElementById('convertBtn').disabled = false
+      }
+
+      function onFileSelected(e) {
+        if (e.target.files[0]) handleFile(e.target.files[0])
+      }
+
+      // AI mode toggle
+      document
+        .getElementById('convertMode')
+        .addEventListener('change', function () {
+          document.getElementById('aiConfig').style.display =
+            this.value === 'ai' ? 'block' : 'none'
+        })
+
+      // ============================================================
+      // API Calls
+      // ============================================================
+
+      async function convertNovel() {
+        if (!selectedFile) {
+          toast('请先选择小说文件', 'error')
+          return
+        }
+
+        const btn = document.getElementById('convertBtn')
+        btn.disabled = true
+        btn.innerHTML =
+          '<span class="spinner-border spinner-border-sm"></span> 转换中...'
+
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        formData.append('mode', document.getElementById('convertMode').value)
+        if (document.getElementById('convertMode').value === 'ai') {
+          const key = document.getElementById('apiKey').value.trim()
+          if (key) formData.append('api_key', key)
+          formData.append('api_base', document.getElementById('apiBase').value)
+          formData.append('model', document.getElementById('modelName').value)
+        }
+
+        try {
+          const resp = await fetch('/api/convert', {
+            method: 'POST',
+            body: formData,
+          })
+          const result = await resp.json()
+          if (!result.success) {
+            toast(result.error, 'error')
+            return
+          }
+
+          screenplay = result.data.screenplay
+          document.getElementById('statusBadge').textContent =
+            `✅ ${screenplay.title || '剧本'} · ${result.stats?.scenes || 0} 场景`
+          document.getElementById('statusBadge').className =
+            'badge-status bg-success'
+
+          document.getElementById('emptyState').style.display = 'none'
+          document.getElementById('tabNav').style.display = 'flex'
+          document.getElementById('tab-scenes').style.display = 'block'
+          document.getElementById('tab-characters').style.display = 'none'
+          document.getElementById('tab-metadata').style.display = 'none'
+          document.getElementById('tab-yaml').style.display = 'none'
+
+          updateSceneNav()
+          renderCurrentTab()
+          updateSidebarStats(result.stats)
+          toast('✅ 转换完成！', 'success')
+        } catch (e) {
+          toast('网络错误: ' + e.message, 'error')
+        } finally {
+          btn.disabled = false
+          btn.innerHTML = '<i class="bi bi-arrow-repeat"></i> 开始转换'
+        }
+      }
+
+      async function saveScreenplay() {
+        if (!screenplay) return
+        try {
+          const resp = await fetch('/api/screenplay', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ screenplay }),
+          })
+          const result = await resp.json()
+          if (result.success) toast('✅ 剧本已保存', 'success')
+          else toast(result.error, 'error')
+        } catch (e) {
+          toast('保存失败: ' + e.message, 'error')
+        }
+      }
+
+      function downloadScreenplay() {
+        if (!screenplay) {
+          toast('还没有剧本', 'error')
+          return
+        }
+        window.open('/api/screenplay/download', '_blank')
+      }
+
+      async function validateScreenplay() {
+        if (!screenplay) {
+          toast('还没有剧本', 'error')
+          return
+        }
+        try {
+          // First save current state
+          await saveScreenplay()
+          const resp = await fetch('/api/screenplay/validate', {
+            method: 'POST',
+          })
+          const result = await resp.json()
+          if (result.valid) {
+            toast('✅ 校验通过，未发现问题', 'success')
+          } else {
+            const msg = result.issues.slice(0, 5).join('；')
+            toast(
+              `⚠️ 发现 ${result.issues.length} 个问题: ${msg}${result.issues.length > 5 ? '...' : ''}`,
+              'error',
+            )
+          }
+        } catch (e) {
+          toast('校验失败: ' + e.message, 'error')
+        }
+      }
+
+      // ============================================================
+      // Tab Navigation
+      // ============================================================
+
+      document.addEventListener('click', function (e) {
+        if (e.target.classList.contains('tab-btn')) {
+          currentTab = e.target.dataset.tab
+          document
+            .querySelectorAll('.tab-btn')
+            .forEach((b) => b.classList.remove('active'))
+          e.target.classList.add('active')
+          renderCurrentTab()
+        }
+      })
+
+      function renderCurrentTab() {
+        if (!screenplay) return
+        document.getElementById('tab-scenes').style.display =
+          currentTab === 'scenes' ? 'block' : 'none'
+        document.getElementById('tab-characters').style.display =
+          currentTab === 'characters' ? 'block' : 'none'
+        document.getElementById('tab-metadata').style.display =
+          currentTab === 'metadata' ? 'block' : 'none'
+        document.getElementById('tab-yaml').style.display =
+          currentTab === 'yaml' ? 'block' : 'none'
+
+        if (currentTab === 'scenes') renderScenes()
+        else if (currentTab === 'characters') renderCharacters()
+        else if (currentTab === 'metadata') renderMetadata()
+        else if (currentTab === 'yaml') renderYamlPreview()
+      }
+
+      // ============================================================
+      // Sidebar: Scene Navigator
+      // ============================================================
+
+      function updateSceneNav() {
+        const nav = document.getElementById('sceneNav')
+        if (!screenplay || !screenplay.acts) {
+          nav.innerHTML =
+            '<div style="padding:16px;color:var(--text-muted);font-size:0.8rem;text-align:center;">暂无场景</div>'
+          return
+        }
+
+        let html = ''
+        let globalIdx = 0
+        screenplay.acts.forEach((act, ai) => {
+          const actId = `act-${ai}`
+          html += `<div class="act-group">`
+          html += `<div class="act-title" onclick="toggleAct('${actId}')">
+            <i class="bi bi-chevron-down"></i> 第${act.act_number}幕 · ${escHtml(act.title || '')}
+        </div>`
+          html += `<div id="${actId}">`
+          ;(act.scenes || []).forEach((scene, si) => {
+            const activeClass = currentSceneIdx === globalIdx ? ' active' : ''
+            html += `<div class="scene-item${activeClass}" onclick="selectScene(${globalIdx})">
+                <span class="loc-type">${escHtml(scene.location_type || 'INT')}</span>
+                <span>${escHtml(scene.location || '场景' + (globalIdx + 1))}</span>
+            </div>`
+            globalIdx++
+          })
+          html += `</div></div>`
+        })
+        nav.innerHTML = html
+      }
+
+      function toggleAct(actId) {
+        const el = document.getElementById(actId)
+        const title = el.previousElementSibling
+        if (el.style.display === 'none') {
+          el.style.display = 'block'
+          title.classList.remove('collapsed')
+        } else {
+          el.style.display = 'none'
+          title.classList.add('collapsed')
+        }
+      }
+
+      function selectScene(globalIdx) {
+        currentSceneIdx = globalIdx
+        currentTab = 'scenes'
+        document
+          .querySelectorAll('.tab-btn')
+          .forEach((b) => b.classList.remove('active'))
+        document.querySelector('[data-tab="scenes"]').classList.add('active')
+        updateSceneNav()
+        renderScenes()
+      }
+
+      function updateSidebarStats(stats) {
+        if (!stats) return
+        document.getElementById('sidebarStats').innerHTML = `
+        场景: ${stats.scenes || 0} | 节拍: ${stats.beats || 0}<br>
+        对话: ${stats.dialogues || 0} | 角色: ${stats.characters || 0}
+    `
+      }
+
+      // ============================================================
+      // Tab: Scenes
+      // ============================================================
+
+      function renderScenes() {
+        const container = document.getElementById('tab-scenes')
+        if (!screenplay) {
+          container.innerHTML = ''
+          return
+        }
+
+        // Show all scenes if none selected
+        if (currentSceneIdx === null && getFlatScenes().length > 0) {
+          currentSceneIdx = 0
+        }
+
+        const flat = getFlatScenes()
+        if (flat.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state" style="height:auto;padding:60px 0;">
+                <i class="bi bi-film"></i>
+                <h4>暂无场景</h4>
+                <p>点击下方按钮添加第一个场景</p>
+            </div>
+            <div class="btn-row" style="justify-content:center;">
+                <button class="btn btn-accent btn-sm-round" onclick="openAddSceneModal()">
+                    <i class="bi bi-plus-lg"></i> 添加场景
+                </button>
+            </div>`
+          return
+        }
+
+        // Render single selected scene or all
+        if (currentSceneIdx !== null && currentSceneIdx < flat.length) {
+          container.innerHTML = renderSceneCard(
+            flat[currentSceneIdx],
+            currentSceneIdx,
+          )
+        } else {
+          // Fallback: render all
+          container.innerHTML = flat
+            .map((f, i) => renderSceneCard(f, i))
+            .join('')
+        }
+
+        // Add scene button
+        container.innerHTML += `
+        <div class="btn-row">
+            <button class="btn btn-accent btn-sm-round" onclick="openAddSceneModal()">
+                <i class="bi bi-plus-lg"></i> 添加场景
+            </button>
+            ${
+              currentSceneIdx !== null
+                ? `
+            <button class="btn btn-outline-light2 btn-sm-round" onclick="deleteCurrentScene()">
+                <i class="bi bi-trash"></i> 删除当前场景
+            </button>`
+                : ''
+            }
+        </div>`
+      }
+
+      function renderSceneCard(item, globalIdx) {
+        const s = item.scene
+        const beats = s.beats || []
+        const charsPresent = s.characters_present || []
+
+        let beatsHtml = ''
+        beats.forEach((b, bi) => {
+          const typeClass = `beat-type-${b.type || 'description'}`
+          const charName = b.character ? getCharName(b.character) : ''
+          beatsHtml += `
+        <li class="beat-item">
+            <span class="beat-num">#${b.beat_number || bi + 1}</span>
+            <span class="beat-type-tag ${typeClass}">${b.type || 'desc'}</span>
+            ${charName ? `<span class="beat-char">${escHtml(charName)}</span>` : '<span class="beat-char"></span>'}
+            <span class="beat-content">${escHtml(b.content || '')}</span>
+            ${b.emotion ? `<span class="beat-emotion">${escHtml(b.emotion)}</span>` : '<span class="beat-emotion"></span>'}
+            <span class="beat-actions">
+                <button class="btn-icon" onclick="openEditBeatModal(${globalIdx}, ${bi})" title="编辑"><i class="bi bi-pencil"></i></button>
+                <button class="btn-icon" onclick="deleteBeat(${globalIdx}, ${bi})" title="删除"><i class="bi bi-trash"></i></button>
+            </span>
+        </li>`
+        })
+
+        const locationTypeLabel =
+          { INT: '🏠 内景', EXT: '🌳 外景', 'INT/EXT': '🏠🌳 内外' }[
+            s.location_type
+          ] || s.location_type
+
+        return `
+    <div class="scene-card" id="scene-${globalIdx}">
+        <div class="scene-header">
+            <div>
+                <div class="scene-number">场景 #${s.scene_number || globalIdx + 1} · 第${item.act.act_number}幕</div>
+                <div class="scene-location">
+                    <span class="editable" contenteditable="true" data-field="location" data-global="${globalIdx}">${escHtml(s.location || '未命名地点')}</span>
+                </div>
+            </div>
+            <div class="scene-meta">
+                <span>${locationTypeLabel}</span>
+                <span>🕐 ${escHtml(s.time || 'day')}</span>
+            </div>
+        </div>
+        ${
+          s.setting_description
+            ? `
+        <div class="scene-desc editable" contenteditable="true" data-field="setting_description" data-global="${globalIdx}">
+            ${escHtml(s.setting_description)}
+        </div>`
+            : ''
+        }
+        ${
+          charsPresent.length > 0
+            ? `
+        <div style="margin-bottom:12px;font-size:0.78rem;color:var(--text-muted);">
+            👥 出场角色: ${charsPresent.map((id) => `<span style="color:var(--gold);">${escHtml(getCharName(id))}</span>`).join('、')}
+        </div>`
+            : ''
+        }
+
+        <div class="section-label">🎬 节拍 (${beats.length})</div>
+        <ul class="beat-list">${beatsHtml || '<li style="color:var(--text-muted);padding:12px;font-size:0.8rem;">暂无节拍</li>'}</ul>
+
+        <div class="btn-row">
+            <button class="btn btn-outline-light2 btn-sm-round" onclick="openAddBeatModal(${globalIdx})">
+                <i class="bi bi-plus-lg"></i> 添加节拍
+            </button>
+        </div>
+    </div>`
+      }
+
+      function getCharName(charId) {
+        if (!screenplay || !screenplay.characters) return charId
+        const c = screenplay.characters.find((ch) => ch.id === charId)
+        return c ? c.name : charId
+      }
+
+      // ============================================================
+      // Inline Editing
+      // ============================================================
+
+      document.addEventListener(
+        'blur',
+        function (e) {
+          if (
+            e.target.classList.contains('editable') &&
+            e.target.dataset.field &&
+            e.target.dataset.global !== undefined
+          ) {
+            const field = e.target.dataset.field
+            const globalIdx = parseInt(e.target.dataset.global)
+            const newValue = e.target.textContent.trim()
+            const item = findSceneGlobal(globalIdx)
+            if (item) {
+              item.scene[field] = newValue
+            }
+          }
+        },
+        true,
+      )
+
+      // ============================================================
+      // Scene CRUD
+      // ============================================================
+
+      function openAddSceneModal() {
+        // Populate act selector
+        const sel = document.getElementById('newSceneAct')
+        sel.innerHTML = ''
+        ;(screenplay.acts || []).forEach((act, i) => {
+          sel.innerHTML += `<option value="${i}">第${act.act_number}幕 · ${escHtml(act.title || '')}</option>`
+        })
+        document.getElementById('newSceneLocation').value = ''
+        document.getElementById('newSceneLocType').value = 'INT'
+        document.getElementById('newSceneTime').value = 'day'
+        document.getElementById('newSceneDesc').value = ''
+        new bootstrap.Modal(document.getElementById('sceneModal')).show()
+      }
+
+      function addScene() {
+        const actIdx = parseInt(document.getElementById('newSceneAct').value)
+        if (isNaN(actIdx) || !screenplay.acts[actIdx]) return
+
+        const newScene = {
+          scene_number: getFlatScenes().length + 1,
+          location:
+            document.getElementById('newSceneLocation').value || '新场景',
+          location_type: document.getElementById('newSceneLocType').value,
+          time: document.getElementById('newSceneTime').value,
+          setting_description: document.getElementById('newSceneDesc').value,
+          characters_present: [],
+          beats: [],
+        }
+
+        screenplay.acts[actIdx].scenes.push(newScene)
+        bootstrap.Modal.getInstance(
+          document.getElementById('sceneModal'),
+        ).hide()
+        currentSceneIdx = getFlatScenes().length - 1
+        updateSceneNav()
+        renderScenes()
+        updateStats()
+        toast('✅ 场景已添加', 'success')
+      }
+
+      function deleteCurrentScene() {
+        if (currentSceneIdx === null) return
+        if (!confirm('确定删除当前场景及其所有节拍吗？此操作不可撤销。')) return
+
+        const item = findSceneGlobal(currentSceneIdx)
+        if (!item) return
+
+        item.act.scenes.splice(item.sceneIdx, 1)
+
+        const flat = getFlatScenes()
+        currentSceneIdx =
+          flat.length > 0 ? Math.min(currentSceneIdx, flat.length - 1) : null
+        updateSceneNav()
+        renderScenes()
+        updateStats()
+        toast('🗑️ 场景已删除', 'success')
+      }
+
+      // ============================================================
+      // Beat CRUD
+      // ============================================================
+
+      function openAddBeatModal(globalIdx) {
+        document.getElementById('beatEditMode').value = 'add'
+        document.getElementById('beatEditSceneIdx').value = globalIdx
+        document.getElementById('beatEditBeatIdx').value = -1
+        document.getElementById('beatModalTitle').textContent = '添加新节拍'
+        document.getElementById('beatEditType').value = 'dialogue'
+        document.getElementById('beatEditCharacter').value = ''
+        document.getElementById('beatEditContent').value = ''
+        document.getElementById('beatEditEmotion').value = ''
+        document.getElementById('beatEditParenthetical').value = ''
+        populateCharacterSelect()
+        new bootstrap.Modal(document.getElementById('beatModal')).show()
+      }
+
+      function openEditBeatModal(globalIdx, beatIdx) {
+        const item = findSceneGlobal(globalIdx)
+        if (!item || !item.scene.beats[beatIdx]) return
+
+        const beat = item.scene.beats[beatIdx]
+        document.getElementById('beatEditMode').value = 'edit'
+        document.getElementById('beatEditSceneIdx').value = globalIdx
+        document.getElementById('beatEditBeatIdx').value = beatIdx
+        document.getElementById('beatModalTitle').textContent = '编辑节拍'
+        document.getElementById('beatEditType').value =
+          beat.type || 'description'
+        document.getElementById('beatEditCharacter').value =
+          beat.character || ''
+        document.getElementById('beatEditContent').value = beat.content || ''
+        document.getElementById('beatEditEmotion').value = beat.emotion || ''
+        document.getElementById('beatEditParenthetical').value =
+          beat.parenthetical || ''
+        populateCharacterSelect()
+        new bootstrap.Modal(document.getElementById('beatModal')).show()
+      }
+
+      function populateCharacterSelect() {
+        const sel = document.getElementById('beatEditCharacter')
+        sel.innerHTML = '<option value="">— 无 —</option>'
+        collectAllCharacters().forEach((c) => {
+          sel.innerHTML += `<option value="${c.id}">${escHtml(c.name)} (${c.role})</option>`
+        })
+      }
+
+      function saveBeat() {
+        const mode = document.getElementById('beatEditMode').value
+        const globalIdx = parseInt(
+          document.getElementById('beatEditSceneIdx').value,
+        )
+        const beatIdx = parseInt(
+          document.getElementById('beatEditBeatIdx').value,
+        )
+
+        const item = findSceneGlobal(globalIdx)
+        if (!item) return
+
+        const beatData = {
+          beat_number:
+            mode === 'add'
+              ? item.scene.beats.length + 1
+              : item.scene.beats[beatIdx]?.beat_number || beatIdx + 1,
+          type: document.getElementById('beatEditType').value,
+          character: document.getElementById('beatEditCharacter').value || null,
+          content: document.getElementById('beatEditContent').value,
+          emotion: document.getElementById('beatEditEmotion').value || null,
+          parenthetical:
+            document.getElementById('beatEditParenthetical').value || null,
+        }
+
+        if (mode === 'add') {
+          item.scene.beats.push(beatData)
+        } else {
+          item.scene.beats[beatIdx] = beatData
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById('beatModal')).hide()
+        updateSceneNav()
+        renderScenes()
+        updateStats()
+        toast(mode === 'add' ? '✅ 节拍已添加' : '✅ 节拍已更新', 'success')
+      }
+
+      function deleteBeat(globalIdx, beatIdx) {
+        if (!confirm('确定删除此节拍吗？')) return
+        const item = findSceneGlobal(globalIdx)
+        if (!item || !item.scene.beats[beatIdx]) return
+
+        item.scene.beats.splice(beatIdx, 1)
+        // Renumber beats
+        item.scene.beats.forEach((b, i) => {
+          b.beat_number = i + 1
+        })
+        updateSceneNav()
+        renderScenes()
+        updateStats()
+        toast('🗑️ 节拍已删除', 'success')
+      }
+
+      // ============================================================
+      // Tab: Characters
+      // ============================================================
+
+      function renderCharacters() {
+        const container = document.getElementById('tab-characters')
+        const chars = collectAllCharacters()
+
+        if (chars.length === 0) {
+          container.innerHTML = `<div class="empty-state" style="height:auto;padding:60px 0;">
+            <i class="bi bi-people"></i><h4>暂无角色</h4></div>`
+          return
+        }
+
+        const roleNames = {
+          protagonist: '主角',
+          antagonist: '反派',
+          supporting: '配角',
+          minor: '次要',
+          cameo: '客串',
+        }
+
+        container.innerHTML = chars
+          .map(
+            (c) => `
+        <div class="char-card">
+            <div class="char-avatar char-role-${c.role || 'minor'}">${escHtml(c.name[0] || '?')}</div>
+            <div class="char-info">
+                <div>
+                    <span class="char-name">${escHtml(c.name)}</span>
+                    <span class="char-role-tag char-role-${c.role || 'minor'}">${roleNames[c.role] || c.role}</span>
+                    <small style="color:var(--text-muted);margin-left:8px;">${c.id}</small>
+                </div>
+                <div class="char-desc">${escHtml(c.description || '暂无描述')}</div>
+                ${
+                  c.traits && c.traits.length > 0
+                    ? `
+                <div class="char-traits">
+                    ${c.traits.map((t) => `<span class="char-trait">${escHtml(t)}</span>`).join('')}
+                </div>`
+                    : ''
+                }
+                ${c.motivation ? `<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">🎯 动机: ${escHtml(c.motivation)}</div>` : ''}
+                ${c.arc ? `<div style="font-size:0.78rem;color:var(--text-muted);">📈 弧线: ${escHtml(c.arc)}</div>` : ''}
+            </div>
+        </div>
+    `,
+          )
+          .join('')
+      }
+
+      // ============================================================
+      // Tab: Metadata
+      // ============================================================
+
+      function renderMetadata() {
+        const container = document.getElementById('tab-metadata')
+        const m = screenplay.metadata || {}
+
+        container.innerHTML = `
+    <div class="scene-card">
+        <h5 style="margin-bottom:20px;">📋 剧本元数据</h5>
+        <div class="meta-grid">
+            <div class="meta-field">
+                <label>剧本标题</label>
+                <input type="text" id="metaTitle" value="${escHtml(screenplay.title || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>原著名称</label>
+                <input type="text" id="metaOrigWork" value="${escHtml(screenplay.original_work || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>原著作者</label>
+                <input type="text" id="metaOrigAuthor" value="${escHtml(screenplay.original_author || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>改编者</label>
+                <input type="text" id="metaAdaptedBy" value="${escHtml(screenplay.adapted_by || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>版本</label>
+                <input type="text" id="metaVersion" value="${escHtml(screenplay.version || '1.0.0')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>整体基调</label>
+                <input type="text" id="metaTone" value="${escHtml(m.tone || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>预估时长</label>
+                <input type="text" id="metaDuration" value="${escHtml(m.estimated_duration || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field">
+                <label>目标受众</label>
+                <input type="text" id="metaAudience" value="${escHtml(m.target_audience || '')}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field" style="grid-column:1/-1;">
+                <label>类型（以逗号分隔）</label>
+                <input type="text" id="metaGenre" value="${escHtml((m.genre || []).join(', '))}" onchange="updateMeta()">
+            </div>
+            <div class="meta-field" style="grid-column:1/-1;">
+                <label>关键词（以逗号分隔）</label>
+                <input type="text" id="metaKeywords" value="${escHtml((m.keywords || []).join(', '))}" onchange="updateMeta()">
+            </div>
+        </div>
+    </div>`
+      }
+
+      function updateMeta() {
+        if (!screenplay) return
+        screenplay.title = document.getElementById('metaTitle')?.value || ''
+        screenplay.original_work =
+          document.getElementById('metaOrigWork')?.value || ''
+        screenplay.original_author =
+          document.getElementById('metaOrigAuthor')?.value || ''
+        screenplay.adapted_by =
+          document.getElementById('metaAdaptedBy')?.value || ''
+        screenplay.version =
+          document.getElementById('metaVersion')?.value || '1.0.0'
+        if (screenplay.metadata) {
+          screenplay.metadata.tone =
+            document.getElementById('metaTone')?.value || ''
+          screenplay.metadata.estimated_duration =
+            document.getElementById('metaDuration')?.value || ''
+          screenplay.metadata.target_audience =
+            document.getElementById('metaAudience')?.value || ''
+          screenplay.metadata.genre = (
+            document.getElementById('metaGenre')?.value || ''
+          )
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+          screenplay.metadata.keywords = (
+            document.getElementById('metaKeywords')?.value || ''
+          )
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+        }
+      }
+
+      // ============================================================
+      // Tab: YAML Preview
+      // ============================================================
+
+      async function renderYamlPreview() {
+        const container = document.getElementById('tab-yaml')
+        try {
+          // Save first to sync
+          await saveScreenplay()
+          const resp = await fetch('/api/screenplay')
+          const result = await resp.json()
+          if (result.success) {
+            // Generate a rough YAML preview from the JSON
+            const yamlStr = jsToYaml(result.data)
+            container.innerHTML = `<div class="yaml-preview">${escHtml(yamlStr)}</div>`
+          }
+        } catch (e) {
+          container.innerHTML = `<div class="yaml-preview">加载失败: ${escHtml(e.message)}</div>`
+        }
+      }
+
+      function jsToYaml(obj, indent = 0) {
+        // Simple JS→YAML stringifier for preview
+        const pad = '  '.repeat(indent)
+        let out = ''
+        if (Array.isArray(obj)) {
+          obj.forEach((item) => {
+            if (
+              typeof item === 'object' &&
+              item !== null &&
+              !Array.isArray(item)
+            ) {
+              out += pad + '- '
+              const inner = jsToYaml(item, indent + 1).trimStart()
+              out += inner.replace(/\n/g, '\n  ' + pad) + '\n'
+            } else if (typeof item === 'object') {
+              out += pad + '- ' + jsToYaml(item, indent + 1).trimStart() + '\n'
+            } else {
+              out += pad + '- ' + escHtml(String(item)) + '\n'
+            }
+          })
+        } else if (typeof obj === 'object' && obj !== null) {
+          const keys = Object.keys(obj)
+          if (keys.length === 0) return pad + '{}\n'
+          keys.forEach((k) => {
+            const v = obj[k]
+            if (v === null || v === undefined) {
+              out += pad + k + ': \n'
+            } else if (typeof v === 'object') {
+              out += pad + k + ':\n' + jsToYaml(v, indent + 1)
+            } else if (
+              typeof v === 'string' &&
+              (v.includes('\n') || v.length > 60)
+            ) {
+              out += pad + k + ': |\n'
+              v.split('\n').forEach((line) => {
+                out += pad + '  ' + escHtml(line) + '\n'
+              })
+            } else {
+              out += pad + k + ': ' + escHtml(String(v)) + '\n'
+            }
+          })
+        } else {
+          out += pad + escHtml(String(obj)) + '\n'
+        }
+        return out
+      }
+
+      // ============================================================
+      // Stats Update
+      // ============================================================
+
+      function updateStats() {
+        if (!screenplay) return
+        const flat = getFlatScenes()
+        let totalBeats = 0,
+          totalDialogues = 0
+        flat.forEach((f) => {
+          ;(f.scene.beats || []).forEach((b) => {
+            totalBeats++
+            if (b.type === 'dialogue') totalDialogues++
+          })
+        })
+
+        const stats = {
+          scenes: flat.length,
+          beats: totalBeats,
+          dialogues: totalDialogues,
+          characters: (screenplay.characters || []).length,
+        }
+        document.getElementById('statusBadge').textContent =
+          `✅ ${screenplay.title || '剧本'} · ${stats.scenes} 场景`
+        updateSidebarStats(stats)
+      }
+
+      // ============================================================
+      // Utils
+      // ============================================================
+
+      function escHtml(str) {
+        if (!str) return ''
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+      }
+
+      // ============================================================
+      // Init
+      // ============================================================
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // Try to load existing screenplay on page load
+        fetch('/api/screenplay')
+          .then((r) => r.json())
+          .then((result) => {
+            if (result.success) {
+              screenplay = result.data.screenplay
+              document.getElementById('statusBadge').textContent =
+                `✅ ${screenplay.title || '剧本'} · ${result.stats?.scenes || 0} 场景`
+              document.getElementById('statusBadge').className =
+                'badge-status bg-success'
+              document.getElementById('emptyState').style.display = 'none'
+              document.getElementById('tabNav').style.display = 'flex'
+              updateSceneNav()
+              renderCurrentTab()
+              updateSidebarStats(result.stats)
+            }
+          })
+          .catch(() => {
+            /* No existing screenplay, show empty state */
+          })
+      })
+    </script>
+  </body>
+</html>
