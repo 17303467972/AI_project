@@ -23,6 +23,8 @@
 
 【AI小说转剧本】 https://www.bilibili.com/video/BV1f5E46pE3z/?share_source=copy_web&vd_source=dd9dc3a66bbca54d8ffb6ea91bd7cf16
 
+---
+
 ## 快速开始
 
 ### 安装
@@ -195,5 +197,11 @@ python main.py novel.txt --mode ai \
   --api-key your-key \
   --model deepseek-chat
 ```
+
+---
+
+## 许可
+
+MIT License
 
 ---
