@@ -84,7 +84,12 @@ def api_convert():
         # 创建转换器
         converter_kwargs = {}
         if mode == "ai":
-            api_key = api_key or os.environ.get("DEEPSEEK_API_KEY", "")
+            # 优先从表单获取，其次从环境变量（兼容 DEEPSEEK_API_KEY 和 OPENAI_API_KEY）
+            api_key = (
+                api_key
+                or os.environ.get("DEEPSEEK_API_KEY", "")
+                or os.environ.get("OPENAI_API_KEY", "")
+            )
             converter_kwargs = {
                 "api_key": api_key,
                 "api_base": request.form.get("api_base", "https://api.deepseek.com/v1"),

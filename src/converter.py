@@ -906,7 +906,23 @@ class AIConverter(BaseConverter):
                 "使用 AI 模式需要安装 openai 包：pip install openai"
             )
         except Exception as e:
-            raise RuntimeError(f"AI API 调用失败: {e}")
+            err_msg = str(e)
+            # 提供更友好的错误提示
+            if "Connection" in err_msg or "connect" in err_msg.lower():
+                raise RuntimeError(
+                    f"无法连接到 AI API ({self.api_base})。"
+                    "请检查网络连接、代理设置，或确认 API Base URL 正确。"
+                )
+            elif "auth" in err_msg.lower() or "401" in err_msg or "403" in err_msg:
+                raise RuntimeError(
+                    "API Key 无效或已过期。请检查密钥是否正确。"
+                )
+            elif "model" in err_msg.lower():
+                raise RuntimeError(
+                    f"模型 '{self.model}' 不可用。请检查模型名称是否正确。"
+                )
+            else:
+                raise RuntimeError(f"AI API 调用失败: {e}")
 
 
 # ============================================================
